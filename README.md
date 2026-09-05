@@ -12,6 +12,8 @@ Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时
 
 64 位 Windows。单文件 exe，不用装 .NET。
 
+贴边黑舌的交互灵感来自 Vinz（[@hivinz_](https://x.com/hivinz_)）的 macOS 应用 [Codenotch](https://github.com/vinzdg/codenotch)。他当时只做了 Mac，这里是 Windows 上的独立重写，不是官方移植，也没有用他的源码或品牌。详见 [ATTRIBUTION.md](ATTRIBUTION.md)。
+
 ---
 
 ## AI 额度 + AI 网络 · TwinDock

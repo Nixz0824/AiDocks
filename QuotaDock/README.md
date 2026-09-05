@@ -77,4 +77,4 @@ dotnet run -- --self-test
 
 ## 设计边界
 
-视觉和交互参考 Codenotch 的“side notch”概念，但 QuotaDock 没有复制其名称、品牌图标或源代码。Provider 的安全边界和响应解析参考了 MIT 许可的 [Gengchou](https://github.com/ynjmxn/gengchou)，归属见 [ATTRIBUTION.md](ATTRIBUTION.md)。
+视觉和交互灵感来自 Vinz（[@hivinz_](https://x.com/hivinz_)）的 [Codenotch](https://github.com/vinzdg/codenotch)。QuotaDock 没有复制其名称、品牌图标或源代码，也不是官方移植。Provider 的安全边界和响应解析参考了 MIT 许可的 [Gengchou](https://github.com/ynjmxn/gengchou)，归属见 [ATTRIBUTION.md](ATTRIBUTION.md)。
