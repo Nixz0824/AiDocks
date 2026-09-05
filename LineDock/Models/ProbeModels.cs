@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace LineDock.Models;
 
 public enum LineStatus
@@ -67,6 +69,7 @@ public sealed class ProbeSnapshot
     public DateTimeOffset At { get; init; } = DateTimeOffset.Now;
     public ClientPresence Client { get; init; } = new();
     public IReadOnlyList<EndpointResult> Endpoints { get; init; } = [];
+    [JsonIgnore]
     public string? PublicIp { get; init; }
     public string? Location { get; init; }
     public bool? DirectOverseasOk { get; init; }

@@ -93,6 +93,10 @@ dotnet run --project QuotaDock -- --self-test
 dotnet run --project TwinDock  -- --self-test
 ```
 
+## 密钥
+
+不把 Token、OAuth secret、本机 `auth.json` 提交进仓库。额度只读各官方 CLI / 桌面端已经写在本机的登录。细节见 [SECURITY.md](SECURITY.md)。
+
 ## 数据与隐私
 
 - 额度请求只发给签发该登录的官方接口（OpenAI / Anthropic / xAI / Cursor / Google / OpenCode），不经过第三方中转。

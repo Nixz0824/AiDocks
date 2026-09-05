@@ -12,7 +12,10 @@ public sealed class ClaudeQuotaProvider(HttpClient httpClient) : IQuotaProvider
 {
     private const string UsageUrl = "https://api.anthropic.com/api/oauth/usage";
     private const string RefreshUrl = "https://platform.claude.com/v1/oauth/token";
-    private const string ClientId = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+    // Public Claude Code desktop OAuth client. Override with CLAUDE_OAUTH_CLIENT_ID.
+    private static string ClientId =>
+        Environment.GetEnvironmentVariable("CLAUDE_OAUTH_CLIENT_ID")
+        ?? "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 
     public string Id => "claude";
     public string DisplayName => "Claude Usage";

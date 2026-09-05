@@ -101,6 +101,8 @@ internal static class SelfTest
             Require(classified.PipSourceId == "codex", "classify pip source");
             Require(classified.PipStatus == LineStatus.Healthy, "both healthy pip");
 
+            Require(CrashLog.Redact("Authorization: Bearer abcdefghijklmnop").Contains("[redacted]"), "crash log redacts bearer");
+            Require(!CrashLog.Redact("token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aaaaaaaabbbbbbbb.ccccccccdddddddd").Contains("eyJ"), "crash log redacts jwt");
             Require(LineCopy.StatusTitle(LineStatus.Unstable, "Grok") == "Grok偏慢", "slow title");
             Require(Geometry.Parse(RailGeometry.BuildPath(272, 0)).Bounds.Width > 0, "rail path");
             return 0;

@@ -17,3 +17,20 @@ qa-*.jpg
 qa-*.png
 .DS_Store
 Thumbs.db
+
+# Secrets and local credentials — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+auth.json
+.credentials.json
+oauth_creds.json
+secrets.json
+**/error.log
+**/usage-cache.json
+**/history.json
+settings.json
