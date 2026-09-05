@@ -162,11 +162,18 @@ public sealed class CodexQuotaProvider(HttpClient httpClient) : IQuotaProvider
 
     private static string? ResolveAuthPath()
     {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var candidates = new List<string>();
         var configured = Environment.GetEnvironmentVariable("CODEX_HOME");
-        var home = !string.IsNullOrWhiteSpace(configured)
-            ? configured
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex");
-        return string.IsNullOrWhiteSpace(home) ? null : Path.Combine(home, "auth.json");
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            candidates.Add(Path.Combine(configured, "auth.json"));
+        }
+
+        candidates.Add(Path.Combine(home, ".codex", "auth.json"));
+        candidates.Add(Path.Combine(appData, "Codex", "auth.json"));
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     internal sealed record CodexCredentials(string AccessToken, string? AccountId);

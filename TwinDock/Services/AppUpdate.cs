@@ -26,6 +26,8 @@ internal sealed record UpdateResult(UpdateKind Kind, Version Current, Version? L
 internal static class AppUpdate
 {
     public const string AppId = "twindock";
+    public const string Repo = "Nixz0824/AiDocks";
+    public const string ExeName = "TwinDock.exe";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -57,13 +59,13 @@ internal static class AppUpdate
             if (latest is null || parsed > latest)
             {
                 latest = parsed;
-                url = string.IsNullOrWhiteSpace(doc.Url) ? null : doc.Url;
+                url = string.IsNullOrWhiteSpace(doc.Url) ? FallbackReleaseUrl() : doc.Url;
             }
         }
 
         if (latest is null)
         {
-            return new UpdateResult(UpdateKind.Unreachable, current, null, null);
+            return new UpdateResult(UpdateKind.Unreachable, current, null, FallbackReleaseUrl());
         }
 
         return latest > current
@@ -75,7 +77,7 @@ internal static class AppUpdate
     {
         if (string.IsNullOrWhiteSpace(url))
         {
-            return;
+            url = FallbackReleaseUrl();
         }
 
         try
@@ -92,6 +94,8 @@ internal static class AppUpdate
         }
     }
 
+    internal static string FallbackReleaseUrl() => $"https://github.com/{Repo}/releases/latest";
+
     private static IEnumerable<string> Sources()
     {
         yield return Path.Combine(AppContext.BaseDirectory, "latest.json");
@@ -99,7 +103,8 @@ internal static class AppUpdate
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AiDocks",
             "latest.json");
-        yield return "https://raw.githubusercontent.com/aidock-feed/releases/main/latest.json";
+        yield return $"https://raw.githubusercontent.com/{Repo}/main/latest.json";
+        yield return $"https://api.github.com/repos/{Repo}/releases/latest";
     }
 
     private static async Task<FeedEntry?> ReadAsync(string source, CancellationToken cancellationToken)
@@ -109,7 +114,12 @@ internal static class AppUpdate
             string text;
             if (source.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
+                using var http = new HttpClient(new SocketsHttpHandler { Proxy = new LiveLocalProxy(), UseProxy = true })
+                {
+                    Timeout = TimeSpan.FromSeconds(8)
+                };
+                http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "AiDocks");
+                http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/vnd.github+json, application/json");
                 text = await http.GetStringAsync(source, cancellationToken);
             }
             else
@@ -120,6 +130,11 @@ internal static class AppUpdate
                 }
 
                 text = await File.ReadAllTextAsync(source, cancellationToken);
+            }
+
+            if (source.Contains("api.github.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return ParseGitHubRelease(text);
             }
 
             using var document = JsonDocument.Parse(text);
@@ -136,9 +151,40 @@ internal static class AppUpdate
         }
     }
 
-    private sealed class FeedEntry
+    internal static FeedEntry? ParseGitHubRelease(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        var tag = root.TryGetProperty("tag_name", out var tagEl) ? tagEl.GetString() : null;
+        var version = (tag ?? "").TrimStart('v', 'V');
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            return null;
+        }
+
+        string? url = null;
+        if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var asset in assets.EnumerateArray())
+            {
+                var name = asset.TryGetProperty("name", out var nameEl) ? nameEl.GetString() : null;
+                if (string.Equals(name, ExeName, StringComparison.OrdinalIgnoreCase) &&
+                    asset.TryGetProperty("browser_download_url", out var urlEl))
+                {
+                    url = urlEl.GetString();
+                    break;
+                }
+            }
+        }
+
+        url ??= root.TryGetProperty("html_url", out var html) ? html.GetString() : FallbackReleaseUrl();
+        return new FeedEntry { Version = version, Url = url ?? FallbackReleaseUrl() };
+    }
+
+    internal sealed class FeedEntry
     {
         public string Version { get; set; } = "";
         public string Url { get; set; } = "";
     }
 }
+

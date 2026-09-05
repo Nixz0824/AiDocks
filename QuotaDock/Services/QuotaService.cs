@@ -6,13 +6,7 @@ namespace QuotaDock.Services;
 
 public sealed class QuotaService : IDisposable
 {
-    private readonly HttpClient _httpClient = new(new SocketsHttpHandler
-    {
-        PooledConnectionLifetime = TimeSpan.FromMinutes(10)
-    })
-    {
-        Timeout = TimeSpan.FromSeconds(15)
-    };
+    private readonly HttpClient _httpClient = OutboundHttp.Create(TimeSpan.FromSeconds(15), "QuotaDock/0.2");
     private readonly IReadOnlyList<IQuotaProvider> _providers;
     private readonly QuotaCacheStore _cache;
 

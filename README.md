@@ -67,13 +67,26 @@ Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时
 
 ## 怎么用
 
-1. 从 [Releases](https://github.com/Nixz0824/AiDocks/releases) 下载对应 exe，或按下面自己编译。
-2. 双击运行。贴在屏幕左或右边缘；拖黑舌可以换边、换显示器。
+1. 打开 [Releases](https://github.com/Nixz0824/AiDocks/releases/latest)，按需要下载其中一个 exe：`TwinDock.exe` / `QuotaDock.exe` / `LineDock.exe`。不用装 .NET，双击就能开。
+2. 贴在屏幕左或右边缘；拖黑舌可以换边、换显示器。
 3. 指针靠近展开圆环；悬停或单击看详情；移开会收回。
 4. 顶部 `+`：勾选服务商、开机启动、检查更新。底部 `×` 退出。
 5. 第一次可能被 SmartScreen 拦截，选「仍要运行」。再开一次会关掉旧实例，只留最新这一份。
 
 三条线可以同时开，叠在一起时把黑舌上下拖开即可。
+
+## 代理和登录，换软件也能用
+
+不要求特定 VPN / 加速器品牌。只要本机已经能出国，程序会按这个顺序走当前通路：
+
+1. TUN / TAP 隧道（Clash / sing-box / LetsVPN / WARP 等开了虚拟网卡）
+2. 系统代理或 PAC
+3. `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY`
+4. 本机 HTTP / SOCKS 端口（认识 Clash、v2rayN、tntcloud、云云等；不认识的客户端只要在听端口，也会当本地代理用）
+
+额度查询走同一条通路，所以换了加速器不会导致「圆环全是网络不可用」。没开代理、直连被墙时，线路会显示未通/阻断，额度可能暂时读不到——这是网络本身的问题，不是某个品牌没适配。
+
+额度只读本机已经登录过的 CLI / 桌面端，不要求再输密码。换用 Codex Desktop、ChatGPT Desktop、Claude Code、Cursor Nightly、Gemini CLI 等常见安装位置都能找到登录。没登录的那一家圆环显示 `—`，不会去消耗额度。
 
 ## 自己编译
 
@@ -113,6 +126,7 @@ AiDocks/
   LineDock/     AI 网络
   QuotaDock/    AI 额度
   TwinDock/     AI 额度 + AI 网络
+  latest.json   检查更新用的版本与下载地址
   docs/screenshots/
 ```
 

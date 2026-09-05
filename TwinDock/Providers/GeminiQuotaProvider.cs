@@ -149,8 +149,23 @@ public sealed class GeminiQuotaProvider(HttpClient httpClient) : IQuotaProvider
 
     private static GeminiCredentials? ReadCredentials()
     {
-        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gemini", "oauth_creds.json");
-        return File.Exists(path) ? ParseCredentials(File.ReadAllText(path)) : null;
+        var path = ResolveCredentialsPath();
+        return path is null ? null : ParseCredentials(File.ReadAllText(path));
+    }
+
+    private static string? ResolveCredentialsPath()
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string[] candidates =
+        [
+            Path.Combine(home, ".gemini", "oauth_creds.json"),
+            Path.Combine(home, ".config", "gemini", "oauth_creds.json"),
+            Path.Combine(appData, "gemini", "oauth_creds.json"),
+            Path.Combine(local, "gemini", "oauth_creds.json")
+        ];
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     private async Task<string?> LoadProjectAsync(string token, CancellationToken cancellationToken)

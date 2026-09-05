@@ -93,6 +93,15 @@ internal static class SelfTest
             var cursorGeometry = Geometry.Parse("F1 M11.503,0.131 L1.891,5.678 A0.84,0.84 0 0 0 1.471,6.404 L1.471,17.592 A0.84,0.84 0 0 0 1.891,18.316 L11.5,23.866 A1,1 0 0 0 12.498,23.866 L22.108,18.316 A0.84,0.84 0 0 0 22.528,17.592 L22.528,6.404 A0.84,0.84 0 0 0 22.108,5.678 L12.497,0.131 A1.01,1.01 0 0 0 11.501,0.131 Z M2.657,6.338 L21.207,6.338 C21.47,6.338 21.637,6.625 21.504,6.853 L12.23,22.918 C12.168,23.025 12.001,22.982 12.001,22.858 L12.001,12.335 A0.59,0.59 0 0 0 11.706,11.825 L2.596,6.568 C2.487,6.505 2.532,6.338 2.657,6.338 Z");
             Require(!cursorGeometry.Bounds.IsEmpty, "Cursor official mark");
 
+            Require(ClientDetector.IdentifyProcess("clash-verge-rev") == "Clash Verge", "clash verge fingerprint");
+            Require(ClientDetector.IdentifyProcess("letsvpn") == "LetsVPN", "letsvpn fingerprint");
+            var picked = ClientDetector.PickLocalProxy([(38472, 44)], [(44, "clash-verge-rev")]);
+            Require(picked is { Port: 38472, Pid: 44 }, "known client on unknown port still counts");
+            var github = AppUpdate.ParseGitHubRelease("""
+                {"tag_name":"v0.2.0","html_url":"https://github.com/Nixz0824/AiDocks/releases/tag/v0.2.0","assets":[{"name":"QuotaDock.exe","browser_download_url":"https://github.com/Nixz0824/AiDocks/releases/download/v0.2.0/QuotaDock.exe"}]}
+                """);
+            Require(github is { Version: "0.2.0" } && github.Url.EndsWith("QuotaDock.exe", StringComparison.Ordinal), "github release parser");
+
             Require(ProviderCatalog.All.Select(item => item.Id).Distinct().Count() == ProviderCatalog.All.Count, "Provider catalog ids");
             var stub = new StubQuotaProvider(ProviderCatalog.All.First(item => item.Id == "claude"));
             var missing = stub.FetchAsync(CancellationToken.None).GetAwaiter().GetResult();

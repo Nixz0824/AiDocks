@@ -18,6 +18,12 @@ qa-*.png
 .DS_Store
 Thumbs.db
 
+# Local binaries and the Chinese-named screenshot pack
+# (README uses docs/screenshots/; do not commit 170MB exes)
+dist/
+产品截图/
+updates/
+
 # Secrets and local credentials — never commit
 .env
 .env.*

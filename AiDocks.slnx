@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="TwinDock/TwinDock.csproj" />
+  <Project Path="QuotaDock/QuotaDock.csproj" />
+  <Project Path="LineDock/LineDock.csproj" />
+</Solution>

@@ -127,16 +127,31 @@ public sealed class CursorQuotaProvider(HttpClient httpClient) : IQuotaProvider
 
     private static string? ReadAccessToken()
     {
+        foreach (var path in CredentialPaths())
+        {
+            var token = ReadAccessTokenFromDatabase(path);
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                return token;
+            }
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<string> CredentialPaths()
+    {
         var configured = Environment.GetEnvironmentVariable("CURSOR_STATE_VSCDB");
-        var path = !string.IsNullOrWhiteSpace(configured)
-            ? configured
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Cursor",
-                "User",
-                "globalStorage",
-                "state.vscdb");
-        return ReadAccessTokenFromDatabase(path);
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            yield return configured;
+        }
+
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        foreach (var product in new[] { "Cursor", "Cursor Nightly", "Cursor Dev" })
+        {
+            yield return Path.Combine(appData, product, "User", "globalStorage", "state.vscdb");
+        }
     }
 
     private static string? QueryAccessToken(string databasePath)

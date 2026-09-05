@@ -13,11 +13,21 @@ internal static class SelfTest
             Require(ClientDetector.MatchesTnt("tntcloudLite"), "tnt process name");
             Require(ClientDetector.MatchesYunyun("YunyunCore"), "yunyun core process name");
             Require(ClientDetector.IdentifyProcess("Clash Verge") == "Clash Verge", "clash verge fingerprint");
+            Require(ClientDetector.IdentifyProcess("clash-verge-rev") == "Clash Verge", "clash verge rev fingerprint");
             Require(ClientDetector.IdentifyProcess("v2rayN") == "v2rayN", "v2rayn fingerprint");
             Require(ClientDetector.IdentifyProcess("mihomo") == "Mihomo", "mihomo fingerprint");
+            Require(ClientDetector.IdentifyProcess("FlClash") == "FlClash", "flclash fingerprint");
+            Require(ClientDetector.IdentifyProcess("letsvpn") == "LetsVPN", "letsvpn fingerprint");
+            Require(ClientDetector.IdentifyProcess("lantern") == "蓝灯", "lantern fingerprint");
             Require(ClientDetector.IsHttpProxyPort(7890) && ClientDetector.IsSocksProxyPort(10808), "common proxy ports");
             var picked = ClientDetector.PickLocalProxy([(10808, 11), (7890, 12)], [(12, "clash")]);
             Require(picked is { Port: 7890, Socks: false, Pid: 12 }, "prefer http mixed port over socks");
+            var custom = ClientDetector.PickLocalProxy([(38472, 44)], [(44, "clash-verge-rev")]);
+            Require(custom is { Port: 38472, Pid: 44 }, "known client on unknown port still counts");
+            var github = AppUpdate.ParseGitHubRelease("""
+                {"tag_name":"v0.2.0","html_url":"https://github.com/Nixz0824/AiDocks/releases/tag/v0.2.0","assets":[{"name":"LineDock.exe","browser_download_url":"https://github.com/Nixz0824/AiDocks/releases/download/v0.2.0/LineDock.exe"}]}
+                """);
+            Require(github is { Version: "0.2.0" } && github.Url.EndsWith("LineDock.exe", StringComparison.Ordinal), "github release parser");
             Require(new ClientPresence { DiscoveredProxy = "127.0.0.1:7890" }.AnyClient, "unknown client with local proxy is still a path");
             Require(new ClientPresence { TunnelUp = true }.AnyClient, "tunnel counts as a path");
             Require(TcpOwners.PortFromNetworkOrder(0x1234) == 0x3412, "tcp port byte order");

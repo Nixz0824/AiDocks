@@ -206,10 +206,16 @@ public sealed class GrokQuotaProvider(HttpClient httpClient) : IQuotaProvider
 
     private static string? ResolveAuthPath()
     {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var candidates = new List<string>();
         var configured = Environment.GetEnvironmentVariable("GROK_HOME");
-        var home = !string.IsNullOrWhiteSpace(configured)
-            ? configured
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".grok");
-        return string.IsNullOrWhiteSpace(home) ? null : Path.Combine(home, "auth.json");
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            candidates.Add(Path.Combine(configured, "auth.json"));
+        }
+
+        candidates.Add(Path.Combine(home, ".grok", "auth.json"));
+        candidates.Add(Path.Combine(home, ".grok-cli", "auth.json"));
+        return candidates.FirstOrDefault(File.Exists);
     }
 }

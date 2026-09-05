@@ -17,9 +17,15 @@ internal sealed class CredentialChangeWatcher : IDisposable
 
         AddWatcher(Environment.GetEnvironmentVariable("CODEX_HOME"), ".codex", "auth.json");
         AddWatcher(Environment.GetEnvironmentVariable("GROK_HOME"), ".grok", "auth.json");
+        AddWatcher(null, ".grok-cli", "auth.json");
         AddWatcher(Environment.GetEnvironmentVariable("CLAUDE_CONFIG_DIR"), ".claude", ".credentials.json");
+        AddWatcher(null, Path.Combine(".config", "claude"), ".credentials.json");
         AddWatcher(null, ".gemini", "oauth_creds.json");
+        AddWatcher(null, Path.Combine(".config", "gemini"), "oauth_creds.json");
         AddOpenCodeWatcher();
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        AddDirectoryWatcher(Path.Combine(appData, "Cursor", "User", "globalStorage"), "state.vscdb");
+        AddDirectoryWatcher(Path.Combine(appData, "Cursor Nightly", "User", "globalStorage"), "state.vscdb");
     }
 
     public void Dispose()

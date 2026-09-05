@@ -4,11 +4,11 @@ using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using TwinDock.Models;
-using TwinDock.Native;
+using QuotaDock.Models;
+using QuotaDock.Native;
 using Microsoft.Win32;
 
-namespace TwinDock.Services;
+namespace QuotaDock.Services;
 
 internal static class ClientDetector
 {

@@ -177,11 +177,20 @@ public sealed class ClaudeQuotaProvider(HttpClient httpClient) : IQuotaProvider
 
     private static string? ResolveCredentialsPath()
     {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var candidates = new List<string>();
         var configured = Environment.GetEnvironmentVariable("CLAUDE_CONFIG_DIR");
-        var home = !string.IsNullOrWhiteSpace(configured)
-            ? configured
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude");
-        return string.IsNullOrWhiteSpace(home) ? null : Path.Combine(home, ".credentials.json");
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            candidates.Add(Path.Combine(configured, ".credentials.json"));
+            candidates.Add(Path.Combine(configured, "credentials.json"));
+        }
+
+        candidates.Add(Path.Combine(home, ".claude", ".credentials.json"));
+        candidates.Add(Path.Combine(home, ".config", "claude", ".credentials.json"));
+        candidates.Add(Path.Combine(appData, "Claude", ".credentials.json"));
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     private async Task<string?> TryRefreshAsync(string refreshToken, CancellationToken cancellationToken)
