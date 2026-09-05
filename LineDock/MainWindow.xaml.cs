@@ -1503,13 +1503,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             height = Math.Max(height, _detailNeed + 16);
         }
 
+        var railHeight = RailGeometry.HeightFor(LineCount);
         Height = height;
         Width = RailGeometry.CardColumn + RailGeometry.Width;
         Stage.Width = Width;
         Stage.Height = height;
-        Rail.Height = height;
+        Rail.Height = railHeight;
         RailShape.Width = RailGeometry.Width;
-        RailShape.Height = height;
+        RailShape.Height = railHeight;
         ApplyRailPath();
         Canvas.SetLeft(PlusHandle, 9);
         Canvas.SetTop(PlusHandle, RailGeometry.PlusTop + 4);
@@ -1520,7 +1521,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Canvas.SetLeft(DragHandle, 9);
         Canvas.SetTop(DragHandle, RailGeometry.GearTop(LineCount) + 4);
         EdgeHotZone.Height = 58;
-        Canvas.SetTop(EdgeHotZone, Math.Max(0, (height - 58) / 2));
+        Canvas.SetTop(EdgeHotZone, Math.Max(0, (railHeight - 58) / 2));
         if (!_floatingChrome)
         {
             ApplyEdgeLayout(_settings.Edge);

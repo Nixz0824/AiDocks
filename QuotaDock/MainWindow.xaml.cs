@@ -1821,13 +1821,15 @@ public partial class MainWindow : Window
         // 有效个数是连续量：缓动过程中手柄/列表跟着当前帧走，而不是在首帧就跳到整数终点。
         // （之前 × 按钮首帧瞬移 72px，就是减环时下半闪动的来源。）稳态时它恒等于整数个数。
         var effCount = CurrentEffCount();
+        var railHeight = RailGeometry.EdgePad + RailGeometry.EndControl +
+            effCount * RailGeometry.ItemPitch + RailGeometry.EndControl + RailGeometry.EdgePad;
         Height = height;
         Width = RailGeometry.CardColumn + RailGeometry.Width;
         Stage.Width = Width;
         Stage.Height = height;
-        Rail.Height = height;
+        Rail.Height = railHeight;
         RailShape.Width = RailGeometry.Width;
-        RailShape.Height = height;
+        RailShape.Height = railHeight;
         ApplyRailPath();
         Canvas.SetLeft(PlusHandle, 9);
         Canvas.SetTop(PlusHandle, RailGeometry.PlusTop + 4);
@@ -1838,7 +1840,7 @@ public partial class MainWindow : Window
         Canvas.SetLeft(DragHandle, 9);
         Canvas.SetTop(DragHandle, RailGeometry.EdgePad + RailGeometry.EndControl + RailGeometry.ItemPitch * effCount + 4);
         EdgeHotZone.Height = 58;
-        Canvas.SetTop(EdgeHotZone, Math.Max(0, (height - 58) / 2));
+        Canvas.SetTop(EdgeHotZone, Math.Max(0, (railHeight - 58) / 2));
         if (!_floatingChrome)
         {
             ApplyEdgeLayout(_settings.Edge);
@@ -1873,7 +1875,6 @@ public partial class MainWindow : Window
         }
 
         if (Math.Abs(Height - targetHeight) < 0.5 &&
-            Math.Abs(Rail.Height - targetHeight) < 0.5 &&
             Math.Abs(CurrentEffCount() - toCount) < 0.01 &&
             Math.Abs(Top - targetTop) < 0.5)
         {
