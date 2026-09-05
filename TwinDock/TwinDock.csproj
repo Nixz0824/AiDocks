@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>TwinDock</AssemblyName>
+    <RootNamespace>TwinDock</RootNamespace>
+    <Platforms>x64</Platforms>
+    <Version>0.1.0</Version>
+    <Product>TwinDock</Product>
+    <Description>Windows edge-docked AI quota and line monitor.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\*.ttf" />
+    <None Include="latest.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

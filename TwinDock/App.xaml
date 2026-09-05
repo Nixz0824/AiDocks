@@ -1,0 +1,19 @@
+<Application x:Class="TwinDock.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TwinDock">
+    <Application.Resources>
+        <FontFamily x:Key="AppFont">pack://application:,,,/Fonts/#Inter, SF Pro Text, SF Pro Display, PingFang SC, Noto Sans SC, Microsoft YaHei UI, Segoe UI Variable Text</FontFamily>
+        <SolidColorBrush x:Key="InkBrush" Color="#FFF6F7F8" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#FF8B8D92" />
+        <SolidColorBrush x:Key="TrackBrush" Color="#FF292B2E" />
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+        </Style>
+        <Style TargetType="Control">
+            <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+        </Style>
+    </Application.Resources>
+</Application>

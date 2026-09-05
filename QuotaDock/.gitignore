@@ -1,0 +1,18 @@
+bin/
+obj/
+publish/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.log
+
+# Local QA dumps — do not keep screenshots or repro JSON in the source root
+drag-repro-*.json
+picker-repro*.json
+picker-qa/
+qa-*.jpg
+qa-*.png
+*.pdb
