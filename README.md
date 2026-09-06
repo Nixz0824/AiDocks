@@ -42,7 +42,7 @@ Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时
 
 目前可读：
 
-- **Codex** / **ChatGPT**：本机 ChatGPT / Codex 登录
+- **Codex**：本机 Codex / ChatGPT 登录（同一套额度，加号里只显示 Codex）
 - **Grok**：`grok login` 后的本机凭据
 - **Claude**：Claude Code / Claude Desktop
 - **Cursor**：Cursor 桌面应用登录

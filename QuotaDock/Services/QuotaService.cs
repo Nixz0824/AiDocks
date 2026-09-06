@@ -109,9 +109,6 @@ public sealed class QuotaService : IDisposable
                 now, ProviderState.Ready),
             ["gemini"] = new("gemini", "Gemini Usage", "✦", "#8AB4F8",
                 [new QuotaWindow("每日限额", 22, now.AddHours(11), TimeSpan.FromHours(24))],
-                now, ProviderState.Ready),
-            ["chatgpt"] = new("chatgpt", "ChatGPT Usage", "⌬", "#10A37F",
-                [new QuotaWindow("5 小时限额", 55, now.AddHours(2), TimeSpan.FromHours(5)), new QuotaWindow("周限额", 40, now.AddDays(2), TimeSpan.FromDays(7))],
                 now, ProviderState.Ready)
         };
 

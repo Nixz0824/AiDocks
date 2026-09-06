@@ -10,8 +10,7 @@ internal static class ProbeCatalog
         new("codex", "Codex", "chatgpt.com", 443, "https://chatgpt.com", true, "https://modelstatus.ai/api/provider/openai/status"),
         new("claude", "Claude", "claude.ai", 443, "https://claude.ai", true, "https://status.anthropic.com/api/v2/status.json"),
         new("gemini", "Gemini", "gemini.google.com", 443, "https://gemini.google.com", true, "https://status.cloud.google.com/incidents.json"),
-        new("cursor", "Cursor", "cursor.com", 443, "https://cursor.com", true, "https://status.cursor.com/api/v2/summary.json"),
-        new("chatgpt", "ChatGPT", "chatgpt.com", 443, "https://chatgpt.com", true, "https://modelstatus.ai/api/provider/openai/status")
+        new("cursor", "Cursor", "cursor.com", 443, "https://cursor.com", true, "https://status.cursor.com/api/v2/summary.json")
     ];
 
     public static readonly ProbeTarget Mainland = new("cn", "国内", "www.baidu.com", 443, null, false);
@@ -20,7 +19,9 @@ internal static class ProbeCatalog
 
     public static IReadOnlyList<string> Normalize(IEnumerable<string>? ids)
     {
-        var set = new HashSet<string>(ids ?? DefaultIds, StringComparer.OrdinalIgnoreCase);
+        var set = new HashSet<string>(
+            (ids ?? DefaultIds).Select(id => id.Equals("chatgpt", StringComparison.OrdinalIgnoreCase) ? "codex" : id),
+            StringComparer.OrdinalIgnoreCase);
         var ordered = Overseas.Select(target => target.Id).Where(set.Contains).ToList();
         return ordered.Count == 0 ? DefaultIds : ordered;
     }

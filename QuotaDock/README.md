@@ -6,12 +6,11 @@ AiDocks 系列的额度监测子线。截图、三条产品线对照和仓库级
 
 ## 当前支持
 
-- Codex：先读取 `%CODEX_HOME%\auth.json`；凭据缺失或过期时，短暂启动隐藏的 `codex app-server` 调用只读 `account/rateLimits/read`，查询后立即退出。
+- Codex：先读取 `%CODEX_HOME%\auth.json`；凭据缺失或过期时，短暂启动隐藏的 `codex app-server` 调用只读 `account/rateLimits/read`，查询后立即退出。ChatGPT Desktop 与 Codex 共用这一套登录和额度，加号里只保留 Codex。
 - OpenCode：读取本机 `opencode auth login` 写入的 Go API Key（`~/.local/share/opencode/auth.json` 的 `opencode-go` 条目，兼容 `opencode.json` 配置与 `OPENCODE_GO_API_KEY` 环境变量），查询官方 `GET /zen/go/v1/usage` 的 5 小时滚动、周、月三窗口。不碰 Zen 按量余额（官方无此 API，不捏造）。
 - Grok：读取 `%GROK_HOME%\auth.json`；令牌被拒绝时，隐藏运行一次无生成请求的 `grok models` 让官方 CLI 尝试续期，再重试额度。
 - Cursor：读取 Cursor 桌面应用本机登录，查询包含用量和 API 用量。不写入 Cursor 的登录文件。
 - Claude：读取 `~/.claude/.credentials.json`，查询 5 小时限额和周限额。
-- ChatGPT：与 Codex 共用 ChatGPT 登录，查询 5 小时限额和周限额。
 - Gemini：读取 `~/.gemini/oauth_creds.json`，查询每日限额。
 - 左右边缘磁吸、拖动黑色窄轨换边、多显示器工作区定位。
 - Codenotch 风格的空闲收缩、窄轨展开、额度环绘制和 Provider 卡片交叉切换动效。
@@ -41,24 +40,22 @@ AiDocks 系列的额度监测子线。截图、三条产品线对照和仓库级
 
 ## 登录要求
 
-- Codex：先在 Codex Desktop 登录，或运行 `codex login`。
+- Codex：先在 Codex Desktop 或 ChatGPT Desktop 登录，或运行 `codex login`。
 - OpenCode：先运行 `opencode auth login` 选择 OpenCode Go 并订阅，或在 `opencode.ai/auth` 复制 API Key（`opencode.json` 的 `provider.opencode-go.options.apiKey` 或 `OPENCODE_GO_API_KEY` 亦可）。
 - Grok：先安装 Grok CLI 并至少运行一次 `grok login`。之后无需保持 Grok Build 窗口开启；只有官方 CLI 无法续期时才需要重新登录。
 - Cursor：先在 Cursor 桌面应用登录。QuotaDock 只读取本机会话，不会保存 Token。
 - Claude：先登录 Claude Code 或 Claude Desktop。
-- ChatGPT：先登录 ChatGPT Desktop，或已完成 `codex login`。
 - Gemini：先运行 Gemini CLI 并完成 Google 登录。
 
 ## 数据和隐私
 
 QuotaDock 只将本机登录 Token 发送给签发它的服务商：
 
-- Codex：`https://chatgpt.com/backend-api/wham/usage`
+- Codex（含 ChatGPT 登录）：`https://chatgpt.com/backend-api/wham/usage`
 - OpenCode：`https://opencode.ai/zen/go/v1/usage`（Go 订阅三窗口；Zen 余额无官方 API，不查询）
 - Grok：`https://cli-chat-proxy.grok.com/v1/billing?format=credits`
 - Cursor：`https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage`
 - Claude：`https://api.anthropic.com/api/oauth/usage`
-- ChatGPT：与 Codex 相同的额度接口
 - Gemini：`https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota`
 
 这些额度接口不是面向第三方公开承诺的稳定 API，服务商更改返回结构后，Provider 可能暂时显示不可用。应用不会调用模型生成端点，不会消耗模型额度，不包含遥测，也不会记录 Token。
