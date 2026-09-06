@@ -35,6 +35,8 @@ internal static class SelfTest
             var ids = ProbeCatalog.Normalize(["cursor", "nope", "grok"]);
             Require(ids.SequenceEqual(["grok", "cursor"]), "catalog order and drop unknown");
             Require(ProbeCatalog.Normalize(["cf", "google"]).SequenceEqual(ProbeCatalog.DefaultIds), "legacy ids fall back");
+            Require(ProbeCatalog.Overseas.All(target => target.Id != "chatgpt"), "plus menu has no duplicate ChatGPT");
+            Require(ProbeCatalog.Normalize(["chatgpt", "grok"]).SequenceEqual(["grok", "codex"]), "chatgpt maps onto codex");
 
             Require(LineScoring.FromLatency(90) == LineStatus.Healthy, "90ms healthy");
             Require(LineScoring.FromLatency(200) == LineStatus.Fair, "200ms fair");

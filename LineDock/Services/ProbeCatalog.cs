@@ -19,7 +19,9 @@ internal static class ProbeCatalog
 
     public static IReadOnlyList<string> Normalize(IEnumerable<string>? ids)
     {
-        var set = new HashSet<string>(ids ?? DefaultIds, StringComparer.OrdinalIgnoreCase);
+        var set = new HashSet<string>(
+            (ids ?? DefaultIds).Select(id => id.Equals("chatgpt", StringComparison.OrdinalIgnoreCase) ? "codex" : id),
+            StringComparer.OrdinalIgnoreCase);
         var ordered = Overseas.Select(target => target.Id).Where(set.Contains).ToList();
         return ordered.Count == 0 ? DefaultIds : ordered;
     }

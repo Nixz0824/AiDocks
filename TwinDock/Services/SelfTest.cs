@@ -103,6 +103,10 @@ internal static class SelfTest
             Require(github is { Version: "0.2.0" } && github.Url.EndsWith("TwinDock.exe", StringComparison.Ordinal), "github release parser");
 
             Require(ProviderCatalog.All.Select(item => item.Id).Distinct().Count() == ProviderCatalog.All.Count, "Provider catalog ids");
+            Require(ProviderCatalog.All.All(item => item.Id != "chatgpt"), "plus menu has no duplicate ChatGPT");
+            Require(ProbeCatalog.Overseas.All(target => target.Id != "chatgpt"), "line catalog has no duplicate ChatGPT");
+            Require(ProviderCatalog.Normalize(["chatgpt", "grok"]).Contains("codex") &&
+                    !ProviderCatalog.Normalize(["chatgpt", "grok"]).Contains("chatgpt"), "chatgpt maps onto codex");
             var stub = new StubQuotaProvider(ProviderCatalog.All.First(item => item.Id == "claude"));
             var missing = stub.FetchAsync(CancellationToken.None).GetAwaiter().GetResult();
             Require(missing.State == ProviderState.MissingCredentials && missing.ProviderId == "claude", "Stub login state");
