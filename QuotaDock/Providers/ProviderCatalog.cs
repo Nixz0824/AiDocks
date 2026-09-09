@@ -23,7 +23,7 @@ internal static class ProviderCatalog
         new("grok", "Grok Usage", "×", "#FF5A36", "请先运行 grok login。", true),
         new("cursor", "Cursor Usage", "▸", "#F4F4F5", "请先登录 Cursor 桌面应用。", true),
         new("gemini", "Gemini Usage", "✦", "#8AB4F8", "请先登录 Gemini CLI，或登录 Google AI Studio。", true),
-        ..DomesticSpecs.All.Select(spec => new ProviderDefinition(spec.Id, spec.DisplayName, spec.Glyph, spec.AccentHex, spec.LoginHint, true))
+        ..DomesticProviders.All.Select(spec => new ProviderDefinition(spec.Id, spec.DisplayName, spec.Glyph, spec.AccentHex, spec.LoginHint, true))
     ];
 
     public static IReadOnlyList<IQuotaProvider> CreateProviders(HttpClient httpClient)
@@ -36,7 +36,8 @@ internal static class ProviderCatalog
             "grok" => new GrokQuotaProvider(httpClient),
             "cursor" => new CursorQuotaProvider(httpClient),
             "gemini" => new GeminiQuotaProvider(httpClient),
-            _ => (IQuotaProvider?)DomesticSpecs.Create(httpClient, definition.Id) ?? new StubQuotaProvider(definition)
+            "workbuddy" => new WorkBuddyQuotaProvider(httpClient),
+            _ => (IQuotaProvider?)DomesticProviders.Create(httpClient, definition.Id) ?? new StubQuotaProvider(definition)
         })).ToArray();
     }
 
@@ -47,6 +48,15 @@ internal static class ProviderCatalog
         foreach (var id in ids ?? [])
         {
             var mapped = id.Equals("chatgpt", StringComparison.OrdinalIgnoreCase) ? "codex" : id;
+            // 0.3.0 shipped domestic providers as separate -cn/-intl entries; the region split is gone,
+            // so an existing selection collapses onto the single per-brand id instead of being dropped.
+            if (!known.Contains(mapped) &&
+                (mapped.EndsWith("-cn", StringComparison.OrdinalIgnoreCase) ||
+                 mapped.EndsWith("-intl", StringComparison.OrdinalIgnoreCase)))
+            {
+                mapped = mapped[..mapped.LastIndexOf('-')];
+            }
+
             if (known.Contains(mapped) && !selected.Contains(mapped, StringComparer.OrdinalIgnoreCase))
             {
                 selected.Add(mapped);

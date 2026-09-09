@@ -1241,7 +1241,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _hideTimer.Stop();
         _railCollapseTimer.Stop();
         ExpandRail();
-        const double height = 220;
+        // Original 6-row picker chrome plus the interval row: padding 8+8, three 28px rows, divider 2+1+6, six 36px rows.
+        const double height = 8 + 28 + 28 + 28 + 2 + 1 + 6 + 6 * 36 + 8;
         PickerSurface.Height = height;
         PickerCard.Height = height;
         RefreshStartupCheck();

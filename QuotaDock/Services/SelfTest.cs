@@ -1,5 +1,7 @@
 using System.Text;
 using System.IO;
+using System.Net.Http;
+using System.Text.Json;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using QuotaDock.Models;
@@ -92,6 +94,7 @@ internal static class SelfTest
 
             var cursorGeometry = Geometry.Parse("F1 M11.503,0.131 L1.891,5.678 A0.84,0.84 0 0 0 1.471,6.404 L1.471,17.592 A0.84,0.84 0 0 0 1.891,18.316 L11.5,23.866 A1,1 0 0 0 12.498,23.866 L22.108,18.316 A0.84,0.84 0 0 0 22.528,17.592 L22.528,6.404 A0.84,0.84 0 0 0 22.108,5.678 L12.497,0.131 A1.01,1.01 0 0 0 11.501,0.131 Z M2.657,6.338 L21.207,6.338 C21.47,6.338 21.637,6.625 21.504,6.853 L12.23,22.918 C12.168,23.025 12.001,22.982 12.001,22.858 L12.001,12.335 A0.59,0.59 0 0 0 11.706,11.825 L2.596,6.568 C2.487,6.505 2.532,6.338 2.657,6.338 Z");
             Require(!cursorGeometry.Bounds.IsEmpty, "Cursor official mark");
+            Require(QuotaDock.Controls.BrandIcon.AllMarksParse(), "domestic official marks parse");
 
             Require(ClientDetector.IdentifyProcess("clash-verge-rev") == "Clash Verge", "clash verge fingerprint");
             Require(ClientDetector.IdentifyProcess("letsvpn") == "LetsVPN", "letsvpn fingerprint");
@@ -103,11 +106,210 @@ internal static class SelfTest
             Require(github is { Version: "0.2.0" } && github.Url.EndsWith("QuotaDock.exe", StringComparison.Ordinal), "github release parser");
 
             Require(ProviderCatalog.All.Select(item => item.Id).Distinct().Count() == ProviderCatalog.All.Count, "Provider catalog ids");
-            Require(ProviderCatalog.All.Any(item => item.Id == "workbuddy-cn") &&
-                    ProviderCatalog.All.Any(item => item.Id == "workbuddy-intl"), "WorkBuddy CN/intl are separate");
-            Require(ProviderCatalog.All.Any(item => item.Id == "qoder-cn") &&
-                    ProviderCatalog.All.Any(item => item.Id == "trae-cn") &&
-                    ProviderCatalog.All.Any(item => item.Id == "minimax-cn"), "Qoder Trae MiniMax present");
+            Require(ProviderCatalog.All.Any(item => item.Id == "kimi") &&
+                    ProviderCatalog.All.Any(item => item.Id == "workbuddy") &&
+                    ProviderCatalog.All.Any(item => item.Id == "glm") &&
+                    ProviderCatalog.All.Any(item => item.Id == "qoder") &&
+                    ProviderCatalog.All.Any(item => item.Id == "trae") &&
+                    ProviderCatalog.All.Any(item => item.Id == "minimax"), "domestic providers present");
+            Require(ProviderCatalog.All.All(item => !item.Id.EndsWith("-cn", StringComparison.Ordinal) &&
+                                                    !item.Id.EndsWith("-intl", StringComparison.Ordinal)),
+                "domestic region split removed (one entry per brand)");
+            var legacyIds = ProviderCatalog.Normalize(["kimi-cn", "workbuddy-intl", "codex"]);
+            Require(legacyIds.Contains("kimi") && legacyIds.Contains("workbuddy") && legacyIds.Contains("codex") &&
+                    legacyIds.Count == 3, "legacy region ids collapse onto brand ids");
+
+            // Payload fixtures are the real shapes the vendors' own clients send (see ATTRIBUTION.md).
+            var workbuddy = DomesticProviders.Parse("workbuddy", """
+                {"code":0,"msg":"OK","data":{"Packages":[{"PackageCode":"p1","CycleTotalCapacity":"1600","CycleRemainCapacity":"1600","CycleUsedCapacity":"0","CapacityUnit":"credits"},{"PackageCode":"p2","CycleTotalCapacity":"500","CycleRemainCapacity":"488.58","CycleUsedCapacity":"11.42","CapacityUnit":"credits"}]}}
+                """);
+            Require(workbuddy.Windows.Count == 2, "WorkBuddy package count");
+            Require(Math.Abs(workbuddy.Windows[0].UsedPercent - 0) < 0.01, "WorkBuddy untouched package");
+            Require(Math.Abs(workbuddy.Windows[1].UsedPercent - 2.284) < 0.01, "WorkBuddy cycle percent");
+
+            var glm = DomesticProviders.Parse("glm", """
+                {"code":200,"msg":"success","data":{"limits":[{"type":"TOKENS_LIMIT","unit":3,"number":5,"percentage":12.5,"nextResetTime":1788935000000},{"type":"TOKENS_LIMIT","unit":6,"number":1,"percentage":4.2,"nextResetTime":1789500000000},{"type":"TIME_LIMIT","unit":6,"number":1,"percentage":80}]}}
+                """);
+            Require(glm.Windows.Count == 2, "GLM ignores the MCP TIME_LIMIT row");
+            Require(glm.Windows.Any(window => window.Label == "5 小时限额" && Math.Abs(window.UsedPercent - 12.5) < 0.01), "GLM 5h window");
+            Require(glm.Windows.Any(window => window.Label == "周限额" && Math.Abs(window.UsedPercent - 4.2) < 0.01), "GLM weekly window");
+
+            var kimi = DomesticProviders.Parse("kimi", """
+                {"usage":{"limit":1000,"used":250,"remaining":750,"resetTime":"2026-09-16T00:00:00Z"},"limits":[{"window":{"duration":300,"timeUnit":"MINUTE"},"detail":{"limit":100,"remaining":88,"resetTime":1788935000000}}],"totalQuota":{"limit":5000,"remaining":4100}}
+                """);
+            Require(kimi.Windows.Count == 3, "Kimi three windows");
+            Require(kimi.Windows.Any(window => window.Label == "5 小时限额" && Math.Abs(window.UsedPercent - 12) < 0.01), "Kimi 5h window");
+            Require(kimi.Windows.Any(window => window.Label == "周限额" && Math.Abs(window.UsedPercent - 25) < 0.01), "Kimi weekly window");
+            Require(kimi.Windows.Any(window => window.Label == "总订阅额度" && Math.Abs(window.UsedPercent - 18) < 0.01), "Kimi total credits window");
+            Require(kimi.Windows.First(window => window.Label == "5 小时限额").ResetsAt ==
+                    DateTimeOffset.FromUnixTimeMilliseconds(1788935000000), "Kimi 5h reset from detail.resetTime");
+            Require(kimi.Windows.First(window => window.Label == "周限额").ResetsAt is not null, "Kimi weekly reset from usage.resetTime");
+
+            var minimax = DomesticProviders.Parse("minimax", """
+                {"base_resp":{"status_code":0,"status_msg":"success"},"model_remains":[{"model_name":"MiniMax-M2","current_interval_total_count":300,"current_interval_usage_count":270,"current_weekly_total_count":2000,"current_weekly_usage_count":1500}]}
+                """);
+            Require(minimax.Windows.Count == 2, "MiniMax window count");
+            Require(Math.Abs(minimax.Windows.First(window => window.Label == "5 小时限额").UsedPercent - 10) < 0.01, "MiniMax remaining-not-used semantics");
+            Require(Math.Abs(minimax.Windows.First(window => window.Label == "周限额").UsedPercent - 25) < 0.01, "MiniMax weekly percent");
+            var minimaxAuth = DomesticProviders.Parse("minimax", """
+                {"base_resp":{"status_code":1004,"status_msg":"cookie is missing, log in again"}}
+                """);
+            Require(minimaxAuth.AuthFailed, "MiniMax auth failure surfaces");
+
+            // Real /v1/token_plan/remains payload (MiniMax Token Plan): percentages carry the data and
+            // the counts are 0, so a count-only parser would produce nothing. end_time /
+            // weekly_end_time are the reset timestamps.
+            var minimaxTokenPlan = DomesticProviders.Parse("minimax", """
+                {"model_remains":[{"start_time":1781834400000,"end_time":1781852400000,"remains_time":16640796,"current_interval_total_count":0,"current_interval_usage_count":0,"model_name":"general","current_weekly_total_count":0,"current_weekly_usage_count":0,"weekly_start_time":1781452800000,"weekly_end_time":1782057600000,"weekly_remains_time":221840796,"current_interval_status":1,"current_interval_remaining_percent":98,"current_weekly_status":1,"current_weekly_remaining_percent":67},{"start_time":1781798400000,"end_time":1781884800000,"model_name":"video","current_interval_remaining_percent":100,"current_weekly_status":1,"current_weekly_remaining_percent":100}],"base_resp":{"status_code":0,"status_msg":"success"}}
+                """);
+            Require(minimaxTokenPlan.Windows.Count == 2, "MiniMax Token Plan windows come from the percentages");
+            var tokenPlanInterval = minimaxTokenPlan.Windows.First(window => window.Label == "5 小时限额");
+            Require(Math.Abs(tokenPlanInterval.UsedPercent - 2) < 0.01, "MiniMax Token Plan interval percent");
+            Require(tokenPlanInterval.ResetsAt == DateTimeOffset.FromUnixTimeMilliseconds(1781852400000), "MiniMax interval reset from end_time");
+            Require(minimaxTokenPlan.Windows.First(window => window.Label == "周限额").ResetsAt ==
+                    DateTimeOffset.FromUnixTimeMilliseconds(1782057600000), "MiniMax weekly reset from weekly_end_time");
+            var minimaxNoWeekly = DomesticProviders.Parse("minimax", """
+                {"model_remains":[{"model_name":"MiniMax-M2","current_interval_remaining_percent":50,"current_weekly_status":0}],"base_resp":{"status_code":0,"status_msg":"success"}}
+                """);
+            Require(minimaxNoWeekly.Windows.Count == 1, "MiniMax weekly window skipped when the plan has none");
+
+            var qoder = DomesticProviders.Parse("qoder", """
+                {"usageType":"plan","totalUsagePercentage":23.5,"isQuotaExceeded":false,"expiresAt":1790060851548,"userQuota":{"total":1000,"used":235,"remaining":765},"addOnQuota":{"total":200,"used":0,"remaining":200}}
+                """);
+            Require(qoder.Windows.Count == 2, "Qoder plan + add-on rows");
+            Require(Math.Abs(qoder.Windows.First(window => window.Label == "基础额度").UsedPercent - 23.5) < 0.01, "Qoder plan percent");
+            Require(Math.Abs(qoder.Windows.First(window => window.Label == "赠送额度").UsedPercent - 0) < 0.01, "Qoder add-on percent");
+            Require(qoder.Windows.All(window => window.ResetsAt == DateTimeOffset.FromUnixTimeMilliseconds(1790060851548)), "Qoder plan expiry carried onto every row");
+
+            var trae = DomesticProviders.Parse("trae", """
+                {"is_credits_billing":false,"user_entitlement_pack_list":[{"entitlement_base_info":{"product_type":1,"status":1,"is_hide":false,"quota":{"basic_usage_limit":500,"bonus_usage_limit":100},"end_time":1790000000000},"usage":{"basic_usage_amount":125,"bonus_usage_amount":20},"display_desc":"Pro"},{"entitlement_base_info":{"product_type":3,"quota":{"basic_usage_limit":100}},"usage":{"basic_usage_amount":10}}]}
+                """);
+            Require(trae.Windows.Count == 1, "Trae skips promo packs");
+            Require(trae.Windows[0].Label == "Pro" && Math.Abs(trae.Windows[0].UsedPercent - 21.55) < 0.02, "Trae bonus-aware percent");
+            Require(trae.Windows[0].ResetsAt is not null, "Trae pack end time");
+
+            // Live-captured WorkBuddy payloads (2026-09-09): the summary carries the numbers,
+            // the resource endpoint carries the package names and cycle end dates.
+            using (var summaryDocument = JsonDocument.Parse("""
+                       {"code":0,"msg":"OK","data":{"Packages":[{"PackageCode":"TCACA_code_007_nzdH5h4Nl0","CycleTotalCapacity":"1600","CycleRemainCapacity":"1600","CycleUsedCapacity":"0","CapacityUnit":"credits"},{"PackageCode":"TCACA_code_008_cfWoLwvjU4","CycleTotalCapacity":"500","CycleRemainCapacity":"488.58","CycleUsedCapacity":"11.42","CapacityUnit":"credits"}],"IsPaidUser":false}}
+                       """))
+            using (var resourceDocument = JsonDocument.Parse("""
+                       {"code":0,"msg":"OK","data":{"Response":{"Data":{"Accounts":[{"PackageCode":"TCACA_code_008_cfWoLwvjU4","PackageName":"CodeBuddy个人体验版","SubProductName":"腾讯云代码助手 (IDE)","CapacitySize":500,"CycleCapacitySize":500,"CycleCapacityUsed":11,"CycleEndTime":"2026-09-30 23:59:59","ExpiredTime":""},{"PackageCode":"TCACA_code_007_nzdH5h4Nl0","PackageName":"CodeBuddy个人版国内运营裂变包","SubProductName":"腾讯云代码助手 (IDE) - 赠送包","CapacitySize":1500,"CycleCapacitySize":1500,"CycleEndTime":"2026-10-09 13:27:37"},{"PackageCode":"TCACA_code_007_nzdH5h4Nl0","PackageName":"CodeBuddy个人版国内运营裂变包","SubProductName":"腾讯云代码助手 (IDE) - 赠送包","CapacitySize":100,"CycleCapacitySize":100,"CycleEndTime":"2026-10-09 13:27:53"}]}}}}
+                       """))
+            {
+                var merged = DomesticProviders.WorkBuddy(summaryDocument.RootElement, resourceDocument.RootElement);
+                Require(merged.Windows.Count == 2, "WorkBuddy merge keeps two packages");
+                var plan = merged.Windows.First(window => window.Label == "订阅额度");
+                var bonus = merged.Windows.First(window => window.Label == "奖励额度");
+                Require(Math.Abs(plan.UsedPercent - 2.284) < 0.01, "WorkBuddy plan percent uses the precise summary value");
+                Require(plan.ResetsAt is { } planReset && planReset.Year == 2026 && planReset.Month == 9 && planReset.Day == 30,
+                    "WorkBuddy plan reset comes from the resource cycle end");
+                Require(Math.Abs(bonus.UsedPercent) < 0.01, "WorkBuddy bonus percent");
+                Require(bonus.ResetsAt is { } bonusReset && bonusReset.Month == 10 && bonusReset.Day == 9,
+                    "WorkBuddy bonus keeps the earliest expiry of the aggregated grant rows");
+            }
+
+            // Credential discovery against the real file shapes the vendors' apps write.
+            Require(LocalCredential.Extract("""{"auth":{"accessToken":"tok-a"}}""") == "tok-a", "credential extract: nested auth.accessToken");
+            Require(LocalCredential.Extract("""{"api_key":"sk-x"}""") == "sk-x", "credential extract: api_key");
+            Require(LocalCredential.Extract("api_key = \"sk-toml\"\nbase_url = \"x\"") == "sk-toml", "credential extract: toml api_key");
+            Require(LocalCredential.Extract("  sk-plain  ") == "sk-plain", "credential extract: plain key file");
+
+            // Full provider pipeline against a loopback HTTP stub: credential discovery → request
+            // construction → status handling → parser. Only TLS/DNS and the vendor's real server are
+            // outside this test; those are covered by the live endpoint probe.
+            Environment.SetEnvironmentVariable("AIDOCKS_SELFTEST_TOKEN", "tok-selftest");
+            try
+            {
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+
+                using (var wbStub = new LoopbackStub(200, """
+                           {"code":0,"msg":"OK","data":{"Packages":[{"CycleTotalCapacity":"500","CycleRemainCapacity":"488.58","CycleUsedCapacity":"11.42"}]}}
+                           """))
+                {
+                    var spec = new DomesticSpec(
+                        "workbuddy", "WorkBuddy", "▣", "#2A9D8F", "hint",
+                        ["AIDOCKS_SELFTEST_TOKEN"], [],
+                        [new DomesticEndpoint($"http://127.0.0.1:{wbStub.Port}/billing/meter/get-user-resource-summary", Post: true, Body: """{"productCode":"p_tcaca"}""")],
+                        DomesticProviders.ParserFor("workbuddy"));
+                    var snapshot = Fetch(new DomesticQuotaProvider(client, spec));
+                    Require(snapshot.State == ProviderState.Ready && snapshot.Windows.Count == 1 &&
+                            Math.Abs(snapshot.Windows[0].UsedPercent - 2.284) < 0.01, "WorkBuddy pipeline reaches Ready over HTTP");
+                    Require(wbStub.LastRequestLine?.StartsWith("POST /billing/meter/get-user-resource-summary", StringComparison.Ordinal) == true, "WorkBuddy request method and path");
+                    Require(wbStub.LastHeaders.TryGetValue("Authorization", out var workbuddyAuth) && workbuddyAuth == "Bearer tok-selftest", "WorkBuddy bearer header");
+                    Require(wbStub.LastBody?.Contains("p_tcaca", StringComparison.Ordinal) == true, "WorkBuddy request body");
+                }
+
+                using (var glmStub = new LoopbackStub(200, """
+                           {"code":200,"msg":"success","data":{"limits":[{"type":"TOKENS_LIMIT","unit":3,"number":5,"percentage":42}]}}
+                           """))
+                {
+                    var spec = new DomesticSpec(
+                        "glm", "GLM", "▲", "#0F6FFF", "hint",
+                        ["AIDOCKS_SELFTEST_TOKEN"], [],
+                        [new DomesticEndpoint($"http://127.0.0.1:{glmStub.Port}/api/monitor/usage/quota/limit", Auth: DomesticAuthStyle.Bare)],
+                        DomesticProviders.ParserFor("glm"));
+                    var snapshot = Fetch(new DomesticQuotaProvider(client, spec));
+                    Require(snapshot.State == ProviderState.Ready && Math.Abs(snapshot.Windows[0].UsedPercent - 42) < 0.01, "GLM pipeline reaches Ready over HTTP");
+                    Require(glmStub.LastHeaders.TryGetValue("Authorization", out var glmAuth) && glmAuth == "tok-selftest", "GLM domestic host sends the bare key");
+                }
+
+                using (var unauthorizedStub = new LoopbackStub(401, """{"error":{"message":"Invalid Authentication"}}"""))
+                {
+                    var spec = new DomesticSpec(
+                        "kimi", "Kimi", "◐", "#F5C518", "hint",
+                        ["AIDOCKS_SELFTEST_TOKEN"], [],
+                        [new DomesticEndpoint($"http://127.0.0.1:{unauthorizedStub.Port}/coding/v1/usages")],
+                        DomesticProviders.ParserFor("kimi"));
+                    var snapshot = Fetch(new DomesticQuotaProvider(client, spec));
+                    Require(snapshot.State == ProviderState.AuthenticationRequired, "HTTP 401 maps to AuthenticationRequired");
+                }
+
+                using (var bodyAuthStub = new LoopbackStub(200, """{"base_resp":{"status_code":1004,"status_msg":"login fail"}}"""))
+                {
+                    var spec = new DomesticSpec(
+                        "minimax", "MiniMax", "▬", "#E11D48", "hint",
+                        ["AIDOCKS_SELFTEST_TOKEN"], [],
+                        [new DomesticEndpoint($"http://127.0.0.1:{bodyAuthStub.Port}/v1/token_plan/remains")],
+                        DomesticProviders.ParserFor("minimax"));
+                    var snapshot = Fetch(new DomesticQuotaProvider(client, spec));
+                    Require(snapshot.State == ProviderState.AuthenticationRequired, "MiniMax 200-with-auth-error maps to AuthenticationRequired");
+                }
+
+                var missingSpec = new DomesticSpec(
+                    "kimi", "Kimi", "◐", "#F5C518", "请先运行 kimi login",
+                    ["AIDOCKS_SELFTEST_ABSENT"], [],
+                    [new DomesticEndpoint("http://127.0.0.1:1/coding/v1/usages")],
+                    DomesticProviders.ParserFor("kimi"));
+                var missingSnapshot = Fetch(new DomesticQuotaProvider(client, missingSpec));
+                Require(missingSnapshot.State == ProviderState.MissingCredentials &&
+                        missingSnapshot.StatusMessage == "请先运行 kimi login", "no credential maps to MissingCredentials with the login hint");
+
+                // The two-call WorkBuddy flow end to end: summary for the numbers, resource for the
+                // cycle end dates, merged into one snapshot.
+                using (var workbuddySummaryStub = new LoopbackStub(200, """
+                           {"code":0,"msg":"OK","data":{"Packages":[{"PackageCode":"TCACA_code_007_nzdH5h4Nl0","CycleTotalCapacity":"1600","CycleRemainCapacity":"1600","CycleUsedCapacity":"0"},{"PackageCode":"TCACA_code_008_cfWoLwvjU4","CycleTotalCapacity":"500","CycleRemainCapacity":"488.58","CycleUsedCapacity":"11.42"}]}}
+                           """))
+                using (var workbuddyResourceStub = new LoopbackStub(200, """
+                           {"code":0,"msg":"OK","data":{"Response":{"Data":{"Accounts":[{"PackageCode":"TCACA_code_008_cfWoLwvjU4","PackageName":"CodeBuddy个人体验版","SubProductName":"腾讯云代码助手 (IDE)","CycleCapacitySize":500,"CycleCapacityUsed":11,"CycleEndTime":"2026-09-30 23:59:59"},{"PackageCode":"TCACA_code_007_nzdH5h4Nl0","PackageName":"CodeBuddy个人版国内运营裂变包","SubProductName":"腾讯云代码助手 (IDE) - 赠送包","CycleCapacitySize":1500,"CycleEndTime":"2026-10-09 13:27:37"}]}}}}
+                           """))
+                {
+                    var provider = new WorkBuddyQuotaProvider(
+                        client,
+                        [new DomesticEndpoint($"http://127.0.0.1:{workbuddySummaryStub.Port}/billing/meter/get-user-resource-summary", Post: true, Body: """{"productCode":"p_tcaca"}""")],
+                        new DomesticEndpoint($"http://127.0.0.1:{workbuddyResourceStub.Port}/v2/billing/meter/get-user-resource", Post: true, Body: """{"productCode":"p_tcaca"}"""));
+                    var workbuddySnapshot = Fetch(provider);
+                    Require(workbuddySnapshot.State == ProviderState.Ready && workbuddySnapshot.Windows.Count == 2, "WorkBuddy two-call pipeline reaches Ready");
+                    Require(workbuddySnapshot.Windows.All(window => window.ResetsAt is not null), "WorkBuddy resets survive the two-call pipeline");
+                    Require(workbuddySnapshot.Windows.Any(window => window.Label == "订阅额度" && window.ResetsAt!.Value.Day == 30 && window.ResetsAt.Value.Month == 9), "WorkBuddy plan reset in the snapshot");
+                    Require(workbuddySnapshot.Windows.Any(window => window.Label == "奖励额度" && window.ResetsAt!.Value.Month == 10), "WorkBuddy bonus reset in the snapshot");
+                }
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("AIDOCKS_SELFTEST_TOKEN", null);
+            }
+
             Require(ProviderCatalog.All.All(item => item.Id != "chatgpt"), "plus menu has no duplicate ChatGPT");
             Require(ProviderCatalog.Normalize(["chatgpt", "grok"]).Contains("codex") &&
                     !ProviderCatalog.Normalize(["chatgpt", "grok"]).Contains("chatgpt"), "chatgpt maps onto codex");
@@ -195,13 +397,29 @@ internal static class SelfTest
             }
             return 0;
         }
-        catch
+        catch (Exception exception)
         {
+            CrashLog.Write(exception);
+            try
+            {
+                File.WriteAllText(
+                    Path.Combine(Path.GetTempPath(), "quotadock-selftest-failure.txt"),
+                    exception.ToString());
+            }
+            catch
+            {
+                // Reporting the failure is best-effort.
+            }
+
             return 1;
         }
     }
 
     private static MemoryStream JsonStream(string json) => new(Encoding.UTF8.GetBytes(json));
+
+    /// <summary>Runs a provider fetch off the dispatcher thread so the loopback test cannot deadlock.</summary>
+    private static QuotaSnapshot Fetch(IQuotaProvider provider) =>
+        Task.Run(() => provider.FetchAsync(CancellationToken.None)).GetAwaiter().GetResult();
 
     private static void Require(bool condition, string name)
     {
@@ -235,3 +453,5 @@ internal static class SelfTest
         }
     }
 }
+
+

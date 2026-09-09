@@ -532,10 +532,44 @@ internal static class ClientDetector
 
 internal sealed class LiveLocalProxy : IWebProxy
 {
+    // Domestic services must not be sent through the overseas VPN proxy: the CN gas stations
+    // (codebuddy.cn / workbuddy.cn / copilot.tencent.com / minimaxi.com / *.cn) are reachable
+    // directly and some of them reject or throttle the tunnel path.
+    private static readonly string[] DomesticHosts = ["tencent.com", "minimaxi.com"];
+
+    internal static bool IsDomesticHost(string host)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            return false;
+        }
+
+        if (host.EndsWith(".cn", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var suffix in DomesticHosts)
+        {
+            if (host.Equals(suffix, StringComparison.OrdinalIgnoreCase) ||
+                host.EndsWith("." + suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public ICredentials? Credentials { get; set; }
 
     public Uri? GetProxy(Uri destination)
     {
+        if (IsDomesticHost(destination.Host))
+        {
+            return null;
+        }
+
         var client = ClientDetector.Peek();
         if (client.TunnelUp)
         {
@@ -565,4 +599,5 @@ internal sealed class LiveLocalProxy : IWebProxy
 
     public bool IsBypassed(Uri host) => GetProxy(host) is null;
 }
+
 

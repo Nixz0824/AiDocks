@@ -28,17 +28,25 @@ public sealed class QuotaWindowViewModel(QuotaWindow window)
 
         var local = reset.Value.ToLocalTime();
         var remaining = local - DateTimeOffset.Now;
-        if (remaining > TimeSpan.Zero && remaining <= TimeSpan.FromHours(24))
+        if (remaining <= TimeSpan.Zero)
         {
-            if (remaining.TotalHours >= 1)
-            {
-                return $"{(int)remaining.TotalHours} 小时后";
-            }
+            return $"{local:MM-dd HH:mm}";
+        }
 
+        if (remaining <= TimeSpan.FromHours(1))
+        {
             return $"{Math.Max(1, remaining.Minutes)} 分钟后";
         }
 
-        return $"{local:ddd HH:mm}";
+        if (remaining <= TimeSpan.FromHours(24))
+        {
+            return $"{(int)remaining.TotalHours} 小时后";
+        }
+
+        // Within a week the weekday is unambiguous; a monthly or plan-expiry date needs the date.
+        return remaining <= TimeSpan.FromDays(7)
+            ? $"{local:ddd HH:mm}"
+            : $"{local:MM-dd HH:mm}";
     }
 }
 

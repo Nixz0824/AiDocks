@@ -282,7 +282,7 @@
 
         <Grid x:Name="PickerSurface"
               Width="194"
-              Height="220"
+              Height="289"
               Canvas.Left="0"
               Canvas.Top="10"
               Opacity="0"
@@ -296,7 +296,7 @@
             </Grid.RenderTransform>
             <Border x:Name="PickerCard"
                     Width="176"
-                    Height="220"
+                    Height="289"
                     HorizontalAlignment="Left"
                     Padding="12,8,12,8"
                     Background="#FF0A0A0B"
@@ -345,11 +345,49 @@
                             Margin="0,2,0,6"
                             HorizontalAlignment="Center"
                             Background="#33FFFFFF" />
-                    <ScrollViewer MaxHeight="144"
+                    <ScrollViewer MaxHeight="216"
                                   HorizontalScrollBarVisibility="Disabled"
                                   VerticalScrollBarVisibility="Auto"
-                                  CanContentScroll="True"
-                                  PanningMode="VerticalOnly">
+                                  CanContentScroll="False"
+                                  PanningMode="VerticalOnly"
+                                  BorderThickness="0"
+                                  Padding="0"
+                                  Focusable="False"
+                                  Background="Transparent">
+                        <!-- Scroll affordance: a 4px track + rounded thumb in the card's own palette,
+                             no arrows, no light system chrome. Shown only while the list overflows. -->
+                        <ScrollViewer.Resources>
+                            <Style TargetType="ScrollBar">
+                                <Setter Property="Width" Value="4" />
+                                <Setter Property="Margin" Value="4,0,0,0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ScrollBar">
+                                            <Grid Width="4" Background="Transparent">
+                                                <Border Width="4"
+                                                        CornerRadius="2"
+                                                        Background="#14FFFFFF" />
+                                                <Track x:Name="PART_Track"
+                                                       IsDirectionReversed="True">
+                                                    <Track.Thumb>
+                                                        <Thumb Width="4">
+                                                            <Thumb.Template>
+                                                                <ControlTemplate TargetType="Thumb">
+                                                                    <Border Width="4"
+                                                                            CornerRadius="2"
+                                                                            Background="#4DFFFFFF" />
+                                                                </ControlTemplate>
+                                                            </Thumb.Template>
+                                                        </Thumb>
+                                                    </Track.Thumb>
+                                                </Track>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ScrollViewer.Resources>
                         <ItemsControl ItemTemplate="{StaticResource CatalogTemplate}"
                                       ItemsSource="{Binding CatalogItems}" />
                     </ScrollViewer>
@@ -500,3 +538,4 @@
         </Canvas>
     </Canvas>
 </Window>
+

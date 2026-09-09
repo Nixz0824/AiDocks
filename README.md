@@ -48,9 +48,24 @@ Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时
 - **Cursor**：Cursor 桌面应用登录
 - **Gemini**：Gemini CLI / Google 登录
 - **OpenCode Go**：`opencode auth login` 或本机 API Key
-- **Kimi / WorkBuddy / GLM / Qoder / Trae / MiniMax**：国内版和国际版在加号里分开勾选；只读本机已登录的桌面端或 API Key
+- **Kimi / WorkBuddy / GLM / Qoder / Trae / MiniMax**：每个品牌在加号里只有一项；国内版与国际版是同一条接口的不同 host，程序按顺序自动探测，不用自己选区域。只读本机已登录的桌面端 / CLI 或 API Key。
 
 没登录时圆环显示 `—`，不会向模型服务发生成请求，也不消耗额度。
+
+国内订阅额度都只读本机已有的登录或 Key，不代登录、不存密码：
+
+| 服务商 | 本机需要 | 额度接口 | 重置时间来自 |
+| --- | --- | --- | --- |
+| Kimi | Kimi Code CLI（`kimi login`）或 `KIMI_API_KEY` | `/coding/v1/usages` | `usage.resetTime`（周）、`limits[].detail.resetTime`（5 小时）；总额度行本身无重置字段 |
+| WorkBuddy | WorkBuddy / CodeBuddy 桌面端已登录 | 计费 meter 接口（汇总 + 资源两条） | 资源接口 `CycleEndTime` |
+| GLM | GLM Coding Plan 的 API Key（`BIGMODEL_API_KEY` / `ZAI_API_KEY`） | `/api/monitor/usage/quota/limit` | `limits[].nextResetTime` |
+| Qoder | Qoder 桌面端已登录，或 `QODER_PAT` | `/api/v2/quota/usage` | `expiresAt`（套餐到期时间；Qoder 没有滚动窗口） |
+| Trae | Trae 桌面端已登录，或 `TRAE_TOKEN` | `/trae/api/v2/pay/ide_user_ent_usage` | `entitlement_base_info.end_time` |
+| MiniMax | `MINIMAX_API_KEY` | `/v1/token_plan/remains` | `end_time`（5 小时）、`weekly_end_time`（周） |
+
+超过 24 小时的重置时间显示成「周几 时:分」，超过一周的显示成「月-日 时:分」；接口本身不给重置时间的行显示「重置时间未知」。
+
+国内域名直连、国际域名走本机代理：同一品牌的国内版与国际版是同一条接口的不同 host，程序按顺序探测，加号里只占一项。
 
 ---
 

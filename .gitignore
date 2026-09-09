@@ -1,6 +1,7 @@
 bin/
 obj/
 publish/
+*_wpftmp.csproj
 .vs/
 .idea/
 .vscode/
