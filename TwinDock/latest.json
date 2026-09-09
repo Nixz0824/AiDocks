@@ -1,14 +1,14 @@
 {
   "linedock": {
-    "version": "0.2.1",
-    "url": "https://github.com/Nixz0824/AiDocks/releases/download/v0.2.1/LineDock.exe"
+    "version": "0.3.0",
+    "url": "https://github.com/Nixz0824/AiDocks/releases/download/v0.3.0/LineDock.exe"
   },
   "quotadock": {
-    "version": "0.2.1",
-    "url": "https://github.com/Nixz0824/AiDocks/releases/download/v0.2.1/QuotaDock.exe"
+    "version": "0.3.0",
+    "url": "https://github.com/Nixz0824/AiDocks/releases/download/v0.3.0/QuotaDock.exe"
   },
   "twindock": {
-    "version": "0.2.1",
-    "url": "https://github.com/Nixz0824/AiDocks/releases/download/v0.2.1/TwinDock.exe"
+    "version": "0.3.0",
+    "url": "https://github.com/Nixz0824/AiDocks/releases/download/v0.3.0/TwinDock.exe"
   }
 }

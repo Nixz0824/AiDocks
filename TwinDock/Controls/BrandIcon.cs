@@ -20,8 +20,30 @@ public sealed class BrandIcon : FrameworkElement
         ["claude"] = "F1 M17.3041,3.541 H13.6323 L20.3283,20.459 H24 Z M6.6959,3.541 L0,20.459 H3.7442 L5.1135,16.9063 H12.1187 L13.488,20.4591 H17.2322 L10.5363,3.5409 Z M6.3247,13.7642 L8.6161,7.8186 10.9075,13.7642 Z",
         ["cursor"] = "F1 M11.503,0.131 L1.891,5.678 A0.84,0.84 0 0 0 1.471,6.404 L1.471,17.592 A0.84,0.84 0 0 0 1.891,18.316 L11.5,23.866 A1,1 0 0 0 12.498,23.866 L22.108,18.316 A0.84,0.84 0 0 0 22.528,17.592 L22.528,6.404 A0.84,0.84 0 0 0 22.108,5.678 L12.497,0.131 A1.01,1.01 0 0 0 11.501,0.131 Z M2.657,6.338 L21.207,6.338 C21.47,6.338 21.637,6.625 21.504,6.853 L12.23,22.918 C12.168,23.025 12.001,22.982 12.001,22.858 L12.001,12.335 A0.59,0.59 0 0 0 11.706,11.825 L2.596,6.568 C2.487,6.505 2.532,6.338 2.657,6.338 Z",
         ["gemini"] = "F1 M12,0 L14.4,9.6 24,12 14.4,14.4 12,24 9.6,14.4 0,12 9.6,9.6 Z",
-        ["opencode"] = "F0 M20,22 H4 V2 H20 V22 Z M16,18 H8 V6 H16 V18 Z"
+        ["opencode"] = "F0 M20,22 H4 V2 H20 V22 Z M16,18 H8 V6 H16 V18 Z",
+        ["kimi"] = "F1 M16,4 A8,8 0 1 0 16,20 A6,6 0 1 1 16,4 Z",
+        ["workbuddy"] = "F1 M4,6 H20 V18 H4 Z M7,9 H17 V15 H7 Z",
+        ["glm"] = "F1 M12,2 L22,20 H2 Z",
+        ["qoder"] = "F1 M12,2 L22,12 12,22 2,12 Z",
+        ["trae"] = "F1 M4,4 L20,12 4,20 Z",
+        ["minimax"] = "F1 M5,5 H10 V19 H5 Z M14,5 H19 V19 H14 Z"
     };
+
+    internal static string NormalizeBrand(string? brand)
+    {
+        var value = brand ?? "";
+        if (value.EndsWith("-cn", StringComparison.OrdinalIgnoreCase) ||
+            value.EndsWith("-intl", StringComparison.OrdinalIgnoreCase))
+        {
+            var split = value.LastIndexOf('-');
+            if (split > 0)
+            {
+                return value[..split];
+            }
+        }
+
+        return value;
+    }
 
     public static readonly DependencyProperty BrandProperty = DependencyProperty.Register(
         nameof(Brand),
@@ -71,7 +93,11 @@ public sealed class BrandIcon : FrameworkElement
 
     internal static void Draw(DrawingContext drawingContext, string? brand, Point center, double size, Brush brush)
     {
-        var key = Marks.ContainsKey(brand ?? string.Empty) ? brand! : "codex";
+        var key = NormalizeBrand(brand);
+        if (!Marks.ContainsKey(key))
+        {
+            key = "codex";
+        }
         if (!Cache.TryGetValue(key, out var geometry))
         {
             try

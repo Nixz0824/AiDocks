@@ -112,7 +112,12 @@ public sealed class QuotaService : IDisposable
                 now, ProviderState.Ready)
         };
 
-        return ProviderCatalog.All.Where(item => enabled.Contains(item.Id)).Select(item => demos[item.Id]).ToArray();
+        return ProviderCatalog.All.Where(item => enabled.Contains(item.Id)).Select(item =>
+            demos.TryGetValue(item.Id, out var demo)
+                ? demo
+                : new QuotaSnapshot(item.Id, item.DisplayName, item.Glyph, item.AccentHex,
+                    [new QuotaWindow("订阅周期", 28, now.AddDays(14), TimeSpan.FromDays(30))],
+                    now, ProviderState.Ready)).ToArray();
     }
 
     private IReadOnlyList<IQuotaProvider> Selected(HashSet<string> enabled) =>

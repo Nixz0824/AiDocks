@@ -23,6 +23,11 @@ internal sealed class CredentialChangeWatcher : IDisposable
         AddWatcher(null, ".gemini", "oauth_creds.json");
         AddWatcher(null, Path.Combine(".config", "gemini"), "oauth_creds.json");
         AddOpenCodeWatcher();
+        AddWatcher(null, ".kimi-code", "config.toml");
+        AddWatcher(null, ".kimi", "config.toml");
+        AddWatcher(null, ".mmx", "config.json");
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        AddDirectoryWatcher(Path.Combine(local, "CodeBuddyExtension", "Data", "Public", "auth"), "*.info");
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         AddDirectoryWatcher(Path.Combine(appData, "Cursor", "User", "globalStorage"), "state.vscdb");
         AddDirectoryWatcher(Path.Combine(appData, "Cursor Nightly", "User", "globalStorage"), "state.vscdb");

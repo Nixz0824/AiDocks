@@ -11,7 +11,7 @@
     <AssemblyName>TwinDock</AssemblyName>
     <RootNamespace>TwinDock</RootNamespace>
     <Platforms>x64</Platforms>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <Product>TwinDock</Product>
     <Description>Windows edge-docked AI quota and line monitor.</Description>
   </PropertyGroup>

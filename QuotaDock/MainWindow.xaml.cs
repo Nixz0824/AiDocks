@@ -1426,7 +1426,7 @@ public partial class MainWindow : Window
         _hideTimer.Stop();
         _railCollapseTimer.Stop();
         ExpandRail();
-        var height = 8 + 28 + 28 + 2 + 1 + 6 + CatalogItems.Count * 36d + 8;
+        const double height = 220;
         PickerSurface.Height = height;
         PickerCard.Height = height;
         RefreshStartupCheck();

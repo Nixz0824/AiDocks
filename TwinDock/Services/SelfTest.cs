@@ -103,6 +103,11 @@ internal static class SelfTest
             Require(github is { Version: "0.2.0" } && github.Url.EndsWith("TwinDock.exe", StringComparison.Ordinal), "github release parser");
 
             Require(ProviderCatalog.All.Select(item => item.Id).Distinct().Count() == ProviderCatalog.All.Count, "Provider catalog ids");
+            Require(ProviderCatalog.All.Any(item => item.Id == "workbuddy-cn") &&
+                    ProviderCatalog.All.Any(item => item.Id == "workbuddy-intl"), "WorkBuddy CN/intl are separate");
+            Require(ProviderCatalog.All.Any(item => item.Id == "qoder-cn") &&
+                    ProviderCatalog.All.Any(item => item.Id == "trae-cn") &&
+                    ProviderCatalog.All.Any(item => item.Id == "minimax-cn"), "Qoder Trae MiniMax present");
             Require(ProviderCatalog.All.All(item => item.Id != "chatgpt"), "plus menu has no duplicate ChatGPT");
             Require(ProbeCatalog.Overseas.All(target => target.Id != "chatgpt"), "line catalog has no duplicate ChatGPT");
             Require(ProviderCatalog.Normalize(["chatgpt", "grok"]).Contains("codex") &&

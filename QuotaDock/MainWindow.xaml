@@ -309,8 +309,14 @@
                             Margin="0,2,0,6"
                             HorizontalAlignment="Center"
                             Background="#33FFFFFF" />
-                    <ItemsControl ItemTemplate="{StaticResource CatalogTemplate}"
-                                  ItemsSource="{Binding CatalogItems}" />
+                    <ScrollViewer MaxHeight="144"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto"
+                                  CanContentScroll="True"
+                                  PanningMode="VerticalOnly">
+                        <ItemsControl ItemTemplate="{StaticResource CatalogTemplate}"
+                                      ItemsSource="{Binding CatalogItems}" />
+                    </ScrollViewer>
                 </StackPanel>
             </Border>
             <Path x:Name="PickerPointer"

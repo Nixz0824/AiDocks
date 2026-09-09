@@ -48,6 +48,7 @@ Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时
 - **Cursor**：Cursor 桌面应用登录
 - **Gemini**：Gemini CLI / Google 登录
 - **OpenCode Go**：`opencode auth login` 或本机 API Key
+- **Kimi / WorkBuddy / GLM / Qoder / Trae / MiniMax**：国内版和国际版在加号里分开勾选；只读本机已登录的桌面端或 API Key
 
 没登录时圆环显示 `—`，不会向模型服务发生成请求，也不消耗额度。
 
