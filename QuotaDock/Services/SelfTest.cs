@@ -88,6 +88,16 @@ internal static class SelfTest
             var opencodeSnakeParsed = OpenCodeQuotaProvider.ParseUsageAsync(opencodeSnake, CancellationToken.None, fixedNow).GetAwaiter().GetResult();
             Require(opencodeSnakeParsed.Count == 1 && Math.Abs(opencodeSnakeParsed[0].UsedPercent - 5) < 0.01, "OpenCode snake_case tolerance");
 
+            using var opencodeLive = JsonStream("""
+                {"usage":{"rolling":{"status":"ok","percent":1,"resetsAt":"2026-09-22T14:47:13.547Z"},"weekly":{"status":"ok","percent":47,"resetsAt":"2026-09-28T00:00:00.000Z"},"monthly":{"status":"ok","percent":93,"resetsAt":"2026-10-12T02:58:16.000Z"}}}
+                """);
+            var opencodeLiveParsed = OpenCodeQuotaProvider.ParseUsageAsync(opencodeLive, CancellationToken.None, fixedNow).GetAwaiter().GetResult();
+            Require(opencodeLiveParsed.Count == 3 &&
+                    Math.Abs(opencodeLiveParsed[0].UsedPercent - 1) < 0.01 &&
+                    Math.Abs(opencodeLiveParsed[1].UsedPercent - 47) < 0.01 &&
+                    Math.Abs(opencodeLiveParsed[2].UsedPercent - 93) < 0.01, "OpenCode live usage envelope");
+            Require(opencodeLiveParsed[1].ResetsAt == new DateTimeOffset(2026, 9, 28, 0, 0, 0, TimeSpan.Zero), "OpenCode live weekly reset");
+
             var opencodeGeometry = Geometry.Parse("F0 M20,22 H4 V2 H20 V22 Z M16,18 H8 V6 H16 V18 Z");
             Require(!opencodeGeometry.Bounds.IsEmpty, "OpenCode official mark");
 

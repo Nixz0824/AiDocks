@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -9,8 +10,10 @@ namespace QuotaDock.Providers;
 
 /// <summary>
 /// OpenCode Go 订阅额度：官方接口 GET https://opencode.ai/zen/go/v1/usage。
-/// 合并 PR sst/opencode#16513，返回 rollingUsage / weeklyUsage / monthlyUsage
-/// 三个窗口的 usagePercent + resetInSec。Zen 按量余额没有官方 API，不捏造。
+/// 线上实装（2026-09 用本机 Go Key 核对）是
+/// <c>usage.{rolling,weekly,monthly}.{status,percent,resetsAt}</c>。
+/// PR sst/opencode#16513 草稿是 <c>rollingUsage.usagePercent + resetInSec</c>，两套都认。
+/// Zen 按量余额没有官方 API，不捏造。
 /// </summary>
 public sealed class OpenCodeQuotaProvider(HttpClient httpClient) : IQuotaProvider
 {
@@ -97,10 +100,16 @@ public sealed class OpenCodeQuotaProvider(HttpClient httpClient) : IQuotaProvide
             }
 
             var timestamp = now ?? DateTimeOffset.Now;
+            var container = root;
+            if (TryGetPropertyIgnoreCase(root, "usage", out var usage) && usage.ValueKind == JsonValueKind.Object)
+            {
+                container = usage;
+            }
+
             var result = new List<QuotaWindow>(3);
-            AddWindow(root, "rollingUsage", "5 小时滚动", TimeSpan.FromHours(5), timestamp, result);
-            AddWindow(root, "weeklyUsage", "周限额", TimeSpan.FromDays(7), timestamp, result);
-            AddWindow(root, "monthlyUsage", "月限额", TimeSpan.FromDays(30), timestamp, result);
+            AddWindow(container, ["rolling", "rollingUsage", "rolling5h"], "5 小时滚动", TimeSpan.FromHours(5), timestamp, result);
+            AddWindow(container, ["weekly", "weeklyUsage"], "周限额", TimeSpan.FromDays(7), timestamp, result);
+            AddWindow(container, ["monthly", "monthlyUsage"], "月限额", TimeSpan.FromDays(30), timestamp, result);
             return result;
         }
         catch (JsonException)
@@ -109,20 +118,37 @@ public sealed class OpenCodeQuotaProvider(HttpClient httpClient) : IQuotaProvide
         }
     }
 
-    private static void AddWindow(JsonElement root, string property, string label, TimeSpan duration, DateTimeOffset now, ICollection<QuotaWindow> target)
+    private static void AddWindow(JsonElement root, string[] names, string label, TimeSpan duration, DateTimeOffset now, ICollection<QuotaWindow> target)
     {
-        if (!TryGetPropertyIgnoreCase(root, property, out var window) || window.ValueKind != JsonValueKind.Object)
+        JsonElement window = default;
+        var found = false;
+        foreach (var name in names)
+        {
+            if (TryGetPropertyIgnoreCase(root, name, out window) && window.ValueKind == JsonValueKind.Object)
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
         {
             return;
         }
 
-        if (!TryReadDouble(window, "usagePercent", out var percent) && !TryReadDouble(window, "usage_percent", out percent))
+        if (!TryReadDouble(window, "percent", out var percent) &&
+            !TryReadDouble(window, "usagePercent", out percent) &&
+            !TryReadDouble(window, "usage_percent", out percent))
         {
             return;
         }
 
         DateTimeOffset? resetAt = null;
-        if ((TryReadDouble(window, "resetInSec", out var resetSec) || TryReadDouble(window, "reset_in_seconds", out resetSec) || TryReadDouble(window, "reset_in_sec", out resetSec)) && resetSec > 0)
+        if (TryReadDate(window, "resetsAt", out var instant) || TryReadDate(window, "resets_at", out instant))
+        {
+            resetAt = instant;
+        }
+        else if ((TryReadDouble(window, "resetInSec", out var resetSec) || TryReadDouble(window, "reset_in_seconds", out resetSec) || TryReadDouble(window, "reset_in_sec", out resetSec)) && resetSec > 0)
         {
             resetAt = now.AddSeconds(resetSec);
         }
@@ -401,5 +427,29 @@ public sealed class OpenCodeQuotaProvider(HttpClient httpClient) : IQuotaProvide
             JsonValueKind.String => double.TryParse(property.GetString(), out value),
             _ => false
         };
+    }
+
+    private static bool TryReadDate(JsonElement element, string name, out DateTimeOffset value)
+    {
+        value = default;
+        if (!TryGetPropertyIgnoreCase(element, name, out var property))
+        {
+            return false;
+        }
+
+        if (property.ValueKind == JsonValueKind.String)
+        {
+            return DateTimeOffset.TryParse(property.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out value);
+        }
+
+        if (property.ValueKind == JsonValueKind.Number && property.TryGetInt64(out var unix))
+        {
+            value = unix > 10_000_000_000
+                ? DateTimeOffset.FromUnixTimeMilliseconds(unix)
+                : DateTimeOffset.FromUnixTimeSeconds(unix);
+            return true;
+        }
+
+        return false;
     }
 }

@@ -10,4 +10,4 @@ QuotaDock 的 Codex/Grok Provider 数据流、字段选择和 xAI issuer 校验�
 
 QuotaDock 的窗口、交互、WPF UI 和 C# 实现为独立实现。贴边黑舌的交互灵感来自 Vinz（[@hivinz_](https://x.com/hivinz_)）的 macOS 应用 [Codenotch](https://github.com/vinzdg/codenotch)；没有包含其代码、名称或品牌资产，也不是官方移植。产品线总说明见仓库根目录 [ATTRIBUTION.md](../ATTRIBUTION.md)。
 
-OpenCode Go 额度接口 `GET /zen/go/v1/usage`（rolling/weekly/monthly 三窗口）来自官方仓库 anomalyco/opencode 的 PR #16513 与 `packages/console/core/src/subscription.ts` 的窗口语义；用量限额（5 小时 $12 / 周 $30 / 月 $60）见官方文档 opencode.ai/docs/go。方形 Logo 取自官方品牌资产 `packages/console/app/src/asset/brand/opencode-logo-light-square.svg`，为适配深色窄轨做了单色化简，未自创图形。
+OpenCode Go 额度接口 `GET /zen/go/v1/usage` 来自官方仓库 anomalyco/opencode 的 PR #16513。线上实装（2026-09 用本机 Go Key 核对）返回 `usage.{rolling,weekly,monthly}.{status,percent,resetsAt}`；PR 草稿的 `rollingUsage.usagePercent + resetInSec` 仍兼容。用量限额见官方文档 opencode.ai/docs/go。方形 Logo 取自官方品牌资产 `packages/console/app/src/asset/brand/opencode-logo-light-square.svg`，为适配深色窄轨做了单色化简，未自创图形。
