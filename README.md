@@ -2,15 +2,23 @@
 
 Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时收成贴边的一小片；划过去展开圆环，再点开详情卡。
 
-同一套外观，三条产品线，按需要只开一个：
+同一套外观，三条产品线，按需要只开一个。**点下面的链接直接开始下载**，不用去 Releases 页里翻：
 
-| 子线 | 程序 | 做什么 |
+| 我想要 | 点这里下载 | 大小 |
 | --- | --- | --- |
-| **AI 额度 + AI 网络** | TwinDock | 额度环 + 线路延迟、丢包、官方状态 |
-| **AI 额度** | QuotaDock | 只看订阅额度 |
-| **AI 网络** | LineDock | 只看海外 AI 线路稳不稳 |
+| **额度 + 线路**（推荐，一个顶两个） | **[⬇️ TwinDock.exe](https://github.com/Nixz0824/AiDocks/releases/latest/download/TwinDock.exe)** | ~166 MB |
+| 只看剩余额度 | [⬇️ QuotaDock.exe](https://github.com/Nixz0824/AiDocks/releases/latest/download/QuotaDock.exe) | ~166 MB |
+| 只看线路稳不稳 | [⬇️ LineDock.exe](https://github.com/Nixz0824/AiDocks/releases/latest/download/LineDock.exe) | ~166 MB |
 
-64 位 Windows。单文件 exe，不用装 .NET。
+**不知道选哪个就下 TwinDock**：额度环和线路监测都在里面，一个顶两个。
+
+- 只支持 64 位 Windows 10 / 11；单文件 exe，**双击就用，不用装 .NET**，删掉这个文件就是卸载。
+- 第一次打开如果弹出「Windows 已保护你的电脑」，点 **更多信息 → 仍要运行** 就行。没买代码签名证书的单文件程序都会这样提示，不是报错。
+- 想核对文件完整性：[SHA256SUMS.txt](https://github.com/Nixz0824/AiDocks/releases/latest/download/SHA256SUMS.txt)。
+
+<p align="center">
+  <img src="docs/screenshots/twin-codex.png" width="300" alt="AiDocks：贴边黑舌展开后的额度与线路详情卡" />
+</p>
 
 贴边黑舌的交互灵感来自 Vinz（[@hivinz_](https://x.com/hivinz_)）的 macOS 应用 [Codenotch](https://github.com/vinzdg/codenotch)。他当时只做了 Mac，这里是 Windows 上的独立重写，不是官方移植，也没有用他的源码或品牌。详见 [ATTRIBUTION.md](ATTRIBUTION.md)。
 
@@ -85,7 +93,7 @@ Windows 屏幕边缘的 AI 监测黑舌。没有托盘，不进 Alt+Tab，闲时
 
 ## 怎么用
 
-1. 打开 [Releases](https://github.com/Nixz0824/AiDocks/releases/latest)，按需要下载其中一个 exe：`TwinDock.exe` / `QuotaDock.exe` / `LineDock.exe`。不用装 .NET，双击就能开。
+1. 在上面那张下载表里点一个 exe（不知道选哪个就用 `TwinDock.exe`）。绿色单文件，双击就能开，不用装 .NET。
 2. 贴在屏幕左或右边缘；拖黑舌可以换边、换显示器。
 3. 指针靠近展开圆环；悬停或单击看详情；移开会收回。
 4. 顶部 `+`：勾选服务商、开机启动、检查更新。底部 `×` 退出。
